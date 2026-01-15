@@ -44,7 +44,7 @@ NUMERICAL_MISSING_FILL_ZERO = ['MasVnrArea', 'GarageYrBlt']
 # --------------------------------------------------------
 # FEATURES EXCLUDED DUE TO FEATURE SELECTION PROCESS
 # --------------------------------------------------------
-with open("excluded_features.txt", encoding='utf-8') as file:
+with open("data/excluded_features.txt", encoding='utf-8') as file:
     EXCLUDED_FEATURES = [int(k) for k in file.read().split('\n') if k != '']
 
 class AmesImputer(BaseEstimator, TransformerMixin):
