@@ -37,9 +37,15 @@ CATEGORICAL_MISSING_FILL = {
 }
 
 # --------------------------------------------------------
-# OTHER NUMERICAL FEATURES AND WHAT THEY ARE FILLED WITH
+# OTHER NUMERICAL FEATURES AND WHAT THEY ARE FILLED WITH 0
 # --------------------------------------------------------
 NUMERICAL_MISSING_FILL_ZERO = ['MasVnrArea', 'GarageYrBlt']
+
+# --------------------------------------------------------
+# FEATURES EXCLUDED DUE TO FEATURE SELECTION PROCESS
+# --------------------------------------------------------
+with open("excluded_features.txt", encoding='utf-8') as file:
+    EXCLUDED_FEATURES = [int(k) for k in file.read().split('\n') if k != '']
 
 class AmesImputer(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -108,13 +114,21 @@ class AmesImputer(BaseEstimator, TransformerMixin):
         for c in self.zero_num_fill:
             X[c] = X[c].fillna(0)
 
-        
-
         return X
+    
+class ColumnDropper(BaseEstimator, TransformerMixin):
+    def __init__(self, columns):
+        self.columns = columns
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        return np.delete(X, self.columns, axis=1)
 
 
-
-def make_preprocessor(df: pd.DataFrame) -> Pipeline:
+def make_preprocessor(df: pd.DataFrame, drop_engineered_cols=True) -> Pipeline:
     # Treat these as categorical even if stored as integers
     treat_as_nominal = [c for c in ['MSSubClass', 'MoSold'] if c in df.columns]
 
@@ -197,11 +211,17 @@ def make_preprocessor(df: pd.DataFrame) -> Pipeline:
         remainder='drop',
         verbose_feature_names_out=False,
     )
-
-    return Pipeline(steps=[
-        ('impute_domain', AmesImputer()),
-        ('encode', encoder),
-    ])
+    if drop_engineered_cols:
+        return Pipeline(steps=[
+            ('impute_domain', AmesImputer()),
+            ('encode', encoder),
+            ('drop_excluded', ColumnDropper(EXCLUDED_FEATURES)),
+        ])
+    else:
+        return Pipeline(steps=[
+            ('impute_domain', AmesImputer()),
+            ('encode', encoder),
+        ])
 
 
 
